@@ -1,7 +1,7 @@
 #!/bin/bash
 
-image_name=10.161.31.82:5000/phm
-image_tag=0.1-enas-server
+image_name=10.161.31.82:5000/phm/enas/serve
+image_tag=latest
 full_image_name=${image_name}:${image_tag}
 cd "$(dirname "$0")"
 
