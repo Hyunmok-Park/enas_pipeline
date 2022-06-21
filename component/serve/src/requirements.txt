@@ -1,3 +1,2 @@
 torch
-torchvision
 bentoml>=1.0.0a

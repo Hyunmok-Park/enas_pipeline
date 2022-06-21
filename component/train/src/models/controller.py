@@ -208,11 +208,11 @@ class Controller(torch.nn.Module):
                                self.func_names,
                                self.args.num_blocks)
 
-        save_dir = "/Users/nhn/Desktop/ENAS-pytorch-master"
-        if save_dir is not None:
-            for idx, dag in enumerate(dags):
-                utils.draw_network(dag,
-                                   os.path.join(save_dir, f'graph{idx}.png'))
+        # save_dir = "/Users/nhn/Desktop/ENAS-pytorch-master"
+        # if save_dir is not None:
+        #     for idx, dag in enumerate(dags):
+        #         utils.draw_network(dag,
+        #                            os.path.join(save_dir, f'graph{idx}.png'))
 
         if with_details:
             return dags, torch.cat(log_probs), torch.cat(entropies)

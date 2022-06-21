@@ -524,7 +524,7 @@ class Trainer(object):
         fname = (f'{self.epoch:03d}-{self.controller_step:06d}-'
                  f'{max_R:6.4f}-best.png')
         path = os.path.join(self.args.model_dir, 'networks', fname)
-        utils.draw_network(best_dag, path)
+        # utils.draw_network(best_dag, path)
         self.tb.image_summary('derive/best', [path], self.epoch)
 
         return best_dag
@@ -662,7 +662,7 @@ class Trainer(object):
                 fname = (f'{self.epoch:03d}-{self.controller_step:06d}-'
                          f'{avg_reward:6.4f}.png')
                 path = os.path.join(self.args.model_dir, 'networks', fname)
-                utils.draw_network(dag, path)
+                #utils.draw_network(dag, path)
                 paths.append(path)
 
             self.tb.image_summary('controller/sample',

@@ -8,7 +8,7 @@ import json
 import logging
 
 import numpy as np
-import pygraphviz as pgv
+# import pygraphviz as pgv
 
 import torch
 from torch.autograd import Variable
@@ -60,29 +60,29 @@ def add_node(graph, node_id, label, shape='box', style='filled'):
             shape=shape, style=style,
     )
 
-def draw_network(dag, path):
-    makedirs(os.path.dirname(path))
-    graph = pgv.AGraph(directed=True, strict=True,
-                       fontname='Helvetica', arrowtype='open') # not work?
-
-    checked_ids = [-2, -1, 0]
-
-    if -1 in dag:
-        add_node(graph, -1, 'x[t]')
-    if -2 in dag:
-        add_node(graph, -2, 'h[t-1]')
-
-    add_node(graph, 0, dag[-1][0].name)
-
-    for idx in dag:
-        for node in dag[idx]:
-            if node.id not in checked_ids:
-                add_node(graph, node.id, node.name)
-                checked_ids.append(node.id)
-            graph.add_edge(idx, node.id)
-
-    graph.layout(prog='dot')
-    graph.draw(path)
+# def draw_network(dag, path):
+#     makedirs(os.path.dirname(path))
+#     graph = pgv.AGraph(directed=True, strict=True,
+#                        fontname='Helvetica', arrowtype='open') # not work?
+#
+#     checked_ids = [-2, -1, 0]
+#
+#     if -1 in dag:
+#         add_node(graph, -1, 'x[t]')
+#     if -2 in dag:
+#         add_node(graph, -2, 'h[t-1]')
+#
+#     add_node(graph, 0, dag[-1][0].name)
+#
+#     for idx in dag:
+#         for node in dag[idx]:
+#             if node.id not in checked_ids:
+#                 add_node(graph, node.id, node.name)
+#                 checked_ids.append(node.id)
+#             graph.add_edge(idx, node.id)
+#
+#     graph.layout(prog='dot')
+#     graph.draw(path)
 
 def make_gif(paths, gif_path, max_frame=50, prefix=""):
     import imageio
