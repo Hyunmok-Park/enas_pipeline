@@ -1,7 +1,7 @@
 #!/bin/bash
 
-image_name=10.161.31.82:5000/phm/enas/train
-image_tag=latest
+image_name=10.161.31.82:5000/phm/enas
+image_tag=0.1-enas-train
 full_image_name=${image_name}:${image_tag}
 cd "$(dirname "$0")"
 
