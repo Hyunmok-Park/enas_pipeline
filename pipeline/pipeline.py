@@ -1,7 +1,7 @@
 import kfp.dsl as dsl
 from kubernetes import client as k8s_client
 
-def TrainOp(train_data, val_data, vop):
+def TrainOp(vop):
     return dsl.ContainerOp(
         name="training pipeline",
         image="10.161.31.82:5000/phm:0.1-enas-train",
@@ -9,23 +9,30 @@ def TrainOp(train_data, val_data, vop):
         command = [
             "sh", "run_train_container.sh"
         ],
-        arguments=[
-            train_data, val_data
-        ],
-        output_artifact_paths={
-            'mlpipeline-metrics': 'data/mlpipeline-metrics.json'
-        },
+
         pvolumes={"src/data": vop},
     ).add_pod_label("app", "enas-application")
 
-def ServeOp(trainop):
+def ReTrainOp(trainop):
+    return dsl.ContainerOp(
+        name="retraining pipeline",
+        image="10.161.31.82:5000/phm:0.1-enas-retrain",
+
+        command = [
+            "sh", "run_retrain_container.sh"
+        ],
+
+        pvolumes={"src/data": trainop.pvolume},
+    ).add_pod_label("app", "enas-application")
+
+def ServeOp(retrainop):
     return dsl.ContainerOp(
         name="serve pipeline",
         image="10.161.31.82:5000/phm:0.1-enas-serve",
         command = [
             "sh", "run_serve_container.sh"
         ],
-        pvolumes={"src/data": trainop.pvolume},
+        pvolumes={"src/data": retrainop.pvolume},
     ).add_pod_label("app", "enas-application")
 
 def VolumnOp():
@@ -45,14 +52,12 @@ def enas_pipeline(
 
     dsl.get_pipeline_conf().set_image_pull_secrets([k8s_client.V1LocalObjectReference(name='regcredidc')])
 
+    train_and_eval = TrainOp(vop)
 
-    train_and_eval = TrainOp(
-        vop
-    )
+    retrain = ReTrainOp(train_and_eval)
+    retrain.after(train_and_eval)
 
-
-    serve = ServeOp(train_and_eval)
-
+    serve = ServeOp(retrain)
     serve.after(train_and_eval)
 
 

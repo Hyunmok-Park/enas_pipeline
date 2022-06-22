@@ -5,6 +5,7 @@ import math
 import os
 import pickle
 
+import bentoml
 import numpy as np
 import scipy.signal
 from tqdm import tqdm
@@ -220,7 +221,6 @@ class Trainer(object):
             self.train_controller()
 
         for self.epoch in tqdm(range(self.start_epoch, self.args.max_epoch)):
-            print(f"=== EPOCH : {self.epoch} ===")
             # 1. Training the shared parameters omega of the child models
             self.train_shared(dag=dag)
 
@@ -229,7 +229,6 @@ class Trainer(object):
                 self.train_controller()
 
             if self.epoch % self.args.save_epoch == 0:
-                print("SAVING MODEL")
                 with _get_no_grad_ctx_mgr():
                     best_dag = dag if dag else self.derive()
                     self.evaluate(self.eval_data,
@@ -241,7 +240,12 @@ class Trainer(object):
             if self.epoch >= self.args.shared_decay_after:
                 utils.update_lr(self.shared_optim, self.shared_lr)
 
-        print("TRAIN FINISHED")
+        bentoml.pytorch.save_model("enas_pipeline", self.shared)
+        bentoml.bentos.build_bentofile(
+            bentofile="bentofile.yaml"
+        )
+
+        bentoml.export_bento('enas_pipeline:latest', './enas_pipeline.bento')
 
     def get_loss(self, inputs, targets, hidden, dags):
         """Computes the loss for the same batch for M models.
@@ -297,14 +301,12 @@ class Trainer(object):
         train_idx = 0
         # TODO(brendan): Why - 1 - 1?
         while train_idx < self.train_data.size(0) - 1 - 1:
-            print(f"=== TRAINING SHARED : {train_idx} / {self.train_data.size(0) - 1 - 1} ===")
-            print(train_idx, self.train_data.size(0) - 1 - 1)
-
             if step > max_step:
                 break
 
             dags = dag if dag else self.controller.sample(
                 self.args.shared_num_sample)
+
             inputs, targets = self.get_batch(self.train_data,
                                              train_idx,
                                              self.max_length)
@@ -343,7 +345,6 @@ class Trainer(object):
             step += 1
             self.shared_step += 1
             train_idx += self.max_length
-        print("TRAINING SHARED FINISHED")
 
     def get_reward(self, dag, entropies, hidden, valid_idx=0):
         """Computes the perplexity of a single sampled model on a minibatch of
@@ -476,7 +477,6 @@ class Trainer(object):
             # validation data, we reset the hidden states.
             if prev_valid_idx > valid_idx:
                 hidden = self.shared.init_hidden(self.args.batch_size)
-        print("=== TRAININNG CONTROLLER FINISHED ===")
 
     def evaluate(self, source, dag, name, batch_size=1, max_num=None):
         """Evaluate on the validation set.
@@ -537,14 +537,6 @@ class Trainer(object):
         path = os.path.join(self.args.model_dir, 'networks', fname)
         utils.draw_network(best_dag, path)
         self.tb.image_summary('derive/best', [path], self.epoch)
-
-        utils.save_dag(self.args, best_dag, "best_dag.json")
-
-        # with open(os.path.join(self.args.model_dir, "best_dag.p"), "wb") as f:
-        #     pickle.dump(best_dag, f)
-
-        with open(os.path.join(self.args.model_dir, "best_dag.txt"), "w") as f:
-            f.write(str(best_dag))
 
         return best_dag
 

@@ -6,7 +6,7 @@ import torch
 import data
 import config
 import utils
-import trainer
+import retrainer
 
 logger = utils.get_logger()
 
@@ -28,7 +28,7 @@ def main(args):  # pylint:disable=redefined-outer-name
     else:
         raise NotImplementedError(f"{args.dataset} is not supported")
 
-    trnr = trainer.Trainer(args, dataset)
+    trnr = retrainer.Trainer(args, dataset)
 
     if args.mode == 'train':
         utils.save_args(args)

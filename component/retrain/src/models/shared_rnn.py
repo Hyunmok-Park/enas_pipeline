@@ -199,6 +199,8 @@ class RNN(models.shared_base.SharedModel):
                 hidden=None,
                 is_train=True):
 
+        inputs = inputs.long()
+
         time_steps = inputs.size(0)
         batch_size = inputs.size(1)
 
@@ -286,7 +288,8 @@ class RNN(models.shared_base.SharedModel):
         extra_out = {'dropped': dropped_output,
                      'hiddens': h1tohT,
                      'raw': raw_output}
-        return decoded, hidden, extra_out
+
+        return [decoded, hidden, extra_out]
 
     def cell(self, x, h_prev, dag):
         """Computes a single pass through the discovered RNN cell."""

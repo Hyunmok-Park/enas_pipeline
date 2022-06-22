@@ -2,8 +2,9 @@ ipdb
 tqdm
 scipy==1.2.1
 imageio
-torch
-torchvision
+torch==1.5.0
+torchvision==0.6.0
+cudatoolkit==10.2
 tensorboardX
 Pillow
 opencv-contrib-python
