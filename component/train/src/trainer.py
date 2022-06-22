@@ -6,6 +6,7 @@ import os
 
 import numpy as np
 import scipy.signal
+from tqdm import tqdm
 from tensorboard import TensorBoard
 import torch
 from torch import nn
@@ -217,7 +218,8 @@ class Trainer(object):
             self.train_shared(self.args.shared_initial_step)
             self.train_controller()
 
-        for self.epoch in range(self.start_epoch, self.args.max_epoch):
+        for self.epoch in tqdm(range(self.start_epoch, self.args.max_epoch)):
+            print(f"=== EPOCH : {self.epoch} ===")
             # 1. Training the shared parameters omega of the child models
             self.train_shared(dag=dag)
 
@@ -226,6 +228,7 @@ class Trainer(object):
                 self.train_controller()
 
             if self.epoch % self.args.save_epoch == 0:
+                print("SAVING MODEL")
                 with _get_no_grad_ctx_mgr():
                     best_dag = dag if dag else self.derive()
                     self.evaluate(self.eval_data,
@@ -236,6 +239,8 @@ class Trainer(object):
 
             if self.epoch >= self.args.shared_decay_after:
                 utils.update_lr(self.shared_optim, self.shared_lr)
+
+        print("TRAIN FINISHED")
 
     def get_loss(self, inputs, targets, hidden, dags):
         """Computes the loss for the same batch for M models.
@@ -291,6 +296,9 @@ class Trainer(object):
         train_idx = 0
         # TODO(brendan): Why - 1 - 1?
         while train_idx < self.train_data.size(0) - 1 - 1:
+            print(f"=== TRAINING SHARED : {train_idx} / {self.train_data.size(0) - 1 - 1} ===")
+            print(train_idx, self.train_data.size(0) - 1 - 1)
+
             if step > max_step:
                 break
 
@@ -334,6 +342,7 @@ class Trainer(object):
             step += 1
             self.shared_step += 1
             train_idx += self.max_length
+        print("TRAINING SHARED FINISHED")
 
     def get_reward(self, dag, entropies, hidden, valid_idx=0):
         """Computes the perplexity of a single sampled model on a minibatch of
@@ -394,7 +403,7 @@ class Trainer(object):
         hidden = self.shared.init_hidden(self.args.batch_size)
         total_loss = 0
         valid_idx = 0
-        for step in range(self.args.controller_max_step):
+        for step in tqdm(range(self.args.controller_max_step), desc="CONTROLLER"):
             # sample models
             dags, log_probs, entropies = self.controller.sample(
                 with_details=True)
@@ -466,6 +475,7 @@ class Trainer(object):
             # validation data, we reset the hidden states.
             if prev_valid_idx > valid_idx:
                 hidden = self.shared.init_hidden(self.args.batch_size)
+        print("=== TRAININNG CONTROLLER FINISHED ===")
 
     def evaluate(self, source, dag, name, batch_size=1, max_num=None):
         """Evaluate on the validation set.
@@ -482,7 +492,7 @@ class Trainer(object):
         hidden = self.shared.init_hidden(batch_size)
 
         pbar = range(0, data.size(0) - 1, self.max_length)
-        for count, idx in enumerate(pbar):
+        for count, idx in tqdm(enumerate(pbar), desc="EVALUATING"):
             inputs, targets = self.get_batch(data, idx, volatile=True)
             output, hidden, _ = self.shared(inputs,
                                             dag,
@@ -524,7 +534,7 @@ class Trainer(object):
         fname = (f'{self.epoch:03d}-{self.controller_step:06d}-'
                  f'{max_R:6.4f}-best.png')
         path = os.path.join(self.args.model_dir, 'networks', fname)
-        # utils.draw_network(best_dag, path)
+        utils.draw_network(best_dag, path)
         self.tb.image_summary('derive/best', [path], self.epoch)
 
         return best_dag
@@ -610,11 +620,11 @@ class Trainer(object):
             map_location = None
 
         self.shared.load_state_dict(
-            torch.load(self.shared_path, map_location=map_location))
+            torch.load(self.shared_path, map_location=map_location), strict=False)
         logger.info(f'[*] LOADED: {self.shared_path}')
 
         self.controller.load_state_dict(
-            torch.load(self.controller_path, map_location=map_location))
+            torch.load(self.controller_path, map_location=map_location), strict=False)
         logger.info(f'[*] LOADED: {self.controller_path}')
 
     def _summarize_controller_train(self,
@@ -662,7 +672,7 @@ class Trainer(object):
                 fname = (f'{self.epoch:03d}-{self.controller_step:06d}-'
                          f'{avg_reward:6.4f}.png')
                 path = os.path.join(self.args.model_dir, 'networks', fname)
-                #utils.draw_network(dag, path)
+                utils.draw_network(dag, path)
                 paths.append(path)
 
             self.tb.image_summary('controller/sample',

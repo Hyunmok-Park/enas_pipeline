@@ -132,7 +132,7 @@ misc_arg.add_argument('--max_save_num', type=int, default=4)
 misc_arg.add_argument('--log_level', type=str, default='INFO', choices=['INFO', 'DEBUG', 'WARN'])
 misc_arg.add_argument('--log_dir', type=str, default='logs')
 misc_arg.add_argument('--data_dir', type=str, default='data')
-misc_arg.add_argument('--num_gpu', type=int, default=0)
+misc_arg.add_argument('--num_gpu', type=int, default=1)
 misc_arg.add_argument('--random_seed', type=int, default=12345)
 misc_arg.add_argument('--use_tensorboard', type=str2bool, default=True)
 misc_arg.add_argument('--dag_path', type=str, default='')
@@ -142,11 +142,10 @@ def get_args():
     hyperparameters mentioned in the paper.
     """
     args, unparsed = parser.parse_known_args()
-    # if args.num_gpu > 0:
-    #     setattr(args, 'cuda', True)
-    # else:
-    #     setattr(args, 'cuda', False)
-    setattr(args, 'cuda', False)
+    if args.num_gpu > 0:
+        setattr(args, 'cuda', True)
+    else:
+        setattr(args, 'cuda', False)
     if len(unparsed) > 1:
         logger.info(f"Unparsed args: {unparsed}")
     return args, unparsed
