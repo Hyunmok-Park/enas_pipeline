@@ -345,7 +345,7 @@ class Trainer(object):
                 abs_max_hidden_norm = new_abs_max_hidden_norm
                 logger.info(f'max hidden {abs_max_hidden_norm}')
             abs_max_grad = _check_abs_max_grad(abs_max_grad, model)
-            torch.nn.utils.clip_grad_norm__(model.parameters(),
+            torch.nn.utils.clip_grad_norm_(model.parameters(),
                                           self.args.shared_grad_clip)
             self.shared_optim.step()
 
@@ -465,7 +465,7 @@ class Trainer(object):
             loss.backward()
 
             if self.args.controller_grad_clip > 0:
-                torch.nn.utils.clip_grad_norm__(model.parameters(),
+                torch.nn.utils.clip_grad_norm_(model.parameters(),
                                               self.args.controller_grad_clip)
             self.controller_optim.step()
 
