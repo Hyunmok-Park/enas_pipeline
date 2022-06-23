@@ -18,16 +18,16 @@ from PIL import ImageFont
 from PIL import ImageDraw 
 
 
-try:
-    import scipy.misc
-    imread = scipy.misc.imread
-    imresize = scipy.misc.imresize
-    imsave = imwrite = scipy.misc.imsave
-except:
-    import cv2
-    imread = cv2.imread
-    imresize = cv2.imresize
-    imsave = imwrite = cv2.imwrite
+# try:
+#     import scipy.misc
+#     imread = scipy.misc.imread
+#     imresize = scipy.misc.imresize
+#     imsave = imwrite = scipy.misc.imsave
+# except:
+#     import cv2
+#     imread = cv2.imread
+#     imresize = cv2.imresize
+#     imsave = imwrite = cv2.imwrite
 
 
 ##########################
@@ -130,26 +130,32 @@ def detach(h):
     else:
         return tuple(detach(v) for v in h)
 
-def get_variable(inputs, cuda=False, **kwargs):
+def get_variable(inputs, cuda=False, mps=False, **kwargs):
     if type(inputs) in [list, np.ndarray]:
         inputs = torch.Tensor(inputs)
-    if cuda:
-        out = Variable(inputs.cuda(), **kwargs)
+    if mps:
+        out = Variable(inputs.to(torch.device('mps')), **kwargs)
     else:
-        out = Variable(inputs, **kwargs)
+        if cuda:
+            out = Variable(inputs.cuda(), **kwargs)
+        else:
+            out = Variable(inputs, **kwargs)
     return out
 
 def update_lr(optimizer, lr):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
-def batchify(data, bsz, use_cuda):
+def batchify(data, bsz, use_cuda, mps):
     # code from https://github.com/pytorch/examples/blob/master/word_language_model/main.py 
     nbatch = data.size(0) // bsz
     data = data.narrow(0, 0, nbatch * bsz)
     data = data.view(bsz, -1).t().contiguous()
-    if use_cuda:
-        data = data.cuda()
+    if mps:
+        data = data.to(torch.device('mps'))
+    else:
+        if use_cuda:
+            data = data.cuda()
     return data
 
 

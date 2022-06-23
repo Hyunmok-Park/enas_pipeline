@@ -1,12 +1,13 @@
 """Entry point."""
 import os
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 import torch
 
 import data
 import config
 import utils
-import retrainer
+import trainer
 
 logger = utils.get_logger()
 
@@ -28,7 +29,7 @@ def main(args):  # pylint:disable=redefined-outer-name
     else:
         raise NotImplementedError(f"{args.dataset} is not supported")
 
-    trnr = retrainer.Trainer(args, dataset)
+    trnr = trainer.Trainer(args, dataset)
 
     if args.mode == 'train':
         utils.save_args(args)

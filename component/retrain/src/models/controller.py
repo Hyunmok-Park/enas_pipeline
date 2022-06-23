@@ -1,12 +1,15 @@
 """A module with NAS controller-related code."""
 import collections
 import os
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 import torch
 import torch.nn.functional as F
 
 import utils
 from utils import Node
+
+
 
 
 def _construct_dags(prev_nodes, activations, func_names, num_blocks):
@@ -117,7 +120,7 @@ class Controller(torch.nn.Module):
         def _get_default_hidden(key):
             return utils.get_variable(
                 torch.zeros(key, self.args.controller_hid),
-                self.args.cuda,
+                self.args.cuda, self.args.mps,
                 requires_grad=False)
 
         self.static_inputs = utils.keydefaultdict(_get_default_hidden)
@@ -221,5 +224,5 @@ class Controller(torch.nn.Module):
 
     def init_hidden(self, batch_size):
         zeros = torch.zeros(batch_size, self.args.controller_hid)
-        return (utils.get_variable(zeros, self.args.cuda, requires_grad=False),
-                utils.get_variable(zeros.clone(), self.args.cuda, requires_grad=False))
+        return (utils.get_variable(zeros, self.args.cuda, self.args.mps, requires_grad=False),
+                utils.get_variable(zeros.clone(), self.args.cuda, self.args.mps, requires_grad=False))

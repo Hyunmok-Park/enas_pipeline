@@ -6,8 +6,9 @@ import os
 import pickle
 
 import numpy as np
-import scipy.signal
+# import scipy.signal
 from tqdm import tqdm
+import bentoml
 from tensorboard import TensorBoard
 import torch
 from torch import nn
@@ -121,6 +122,7 @@ class Trainer(object):
         self.args = args
         self.controller_step = 0
         self.cuda = args.cuda
+        self.mps = args.mps
         self.dataset = dataset
         self.epoch = 0
         self.shared_step = 0
@@ -138,20 +140,24 @@ class Trainer(object):
 
         self.train_data = utils.batchify(dataset.train,
                                          args.batch_size,
-                                         self.cuda)
+                                         self.cuda,
+                                         self.mps)
         # NOTE(brendan): The validation set data is batchified twice
         # separately: once for computing rewards during the Train Controller
         # phase (valid_data, batch size == 64), and once for evaluating ppl
         # over the entire validation set (eval_data, batch size == 1)
         self.valid_data = utils.batchify(dataset.valid,
                                          args.batch_size,
-                                         self.cuda)
+                                         self.cuda,
+                                         self.mps)
         self.eval_data = utils.batchify(dataset.valid,
                                         args.test_batch_size,
-                                        self.cuda)
+                                        self.cuda,
+                                        self.mps)
         self.test_data = utils.batchify(dataset.test,
                                         args.test_batch_size,
-                                        self.cuda)
+                                        self.cuda,
+                                        self.mps)
 
         self.max_length = self.args.shared_rnn_max_length
 
@@ -190,11 +196,16 @@ class Trainer(object):
                                       f'defined')
         self.controller = models.Controller(self.args)
 
-        if self.args.num_gpu == 1:
-            self.shared.cuda()
-            self.controller.cuda()
-        elif self.args.num_gpu > 1:
-            raise NotImplementedError('`num_gpu > 1` is in progress')
+        if self.mps == 1:
+            device = torch.device('mps')
+            self.shared.to(device)
+            self.controller.to(device)
+        else:
+            if self.args.num_gpu == 1:
+                self.shared.cuda()
+                self.controller.cuda()
+            elif self.args.num_gpu > 1:
+                raise NotImplementedError('`num_gpu > 1` is in progress')
 
     def train(self, single=False):
         """Cycles through alternately training the shared parameters and the
@@ -242,6 +253,14 @@ class Trainer(object):
         utils.save_dag(self.args, best_dag, "best_dag.json")
         with open(os.path.join(self.args.model_dir, "best_dag.txt"), "w") as f:
             f.write(str(best_dag))
+
+        if self.args.mode == 'single':
+            bentoml.pytorch.save_model("enas_pipeline", self.shared)
+            bentoml.bentos.build_bentofile(
+                bentofile="bentofile.yaml"
+            )
+
+            bentoml.export_bento('enas_pipeline:latest', './enas_pipeline.bento')
 
     def get_loss(self, inputs, targets, hidden, dags):
         """Computes the loss for the same batch for M models.
@@ -434,7 +453,7 @@ class Trainer(object):
 
             # policy loss
             loss = -log_probs*utils.get_variable(adv,
-                                                 self.cuda,
+                                                 self.cuda, self.args.mps,
                                                  requires_grad=False)
             if self.args.entropy_mode == 'regularizer':
                 loss -= self.args.entropy_coeff * entropies

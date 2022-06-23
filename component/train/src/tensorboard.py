@@ -1,5 +1,5 @@
 import PIL
-import scipy.misc
+# import scipy.misc
 from io import BytesIO
 import tensorboardX as tb
 from tensorboardX.summary import Summary
