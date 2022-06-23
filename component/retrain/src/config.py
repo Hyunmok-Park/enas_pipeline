@@ -133,7 +133,7 @@ misc_arg.add_argument('--log_level', type=str, default='INFO', choices=['INFO', 
 misc_arg.add_argument('--log_dir', type=str, default='logs')
 misc_arg.add_argument('--data_dir', type=str, default='data')
 misc_arg.add_argument('--num_gpu', type=int, default=1)
-misc_arg.add_argument('--mps', type=int, default=0)
+misc_arg.add_argument('--mps', type=int, default=1)
 misc_arg.add_argument('--random_seed', type=int, default=12345)
 misc_arg.add_argument('--use_tensorboard', type=str2bool, default=True)
 misc_arg.add_argument('--dag_path', type=str, default='')
