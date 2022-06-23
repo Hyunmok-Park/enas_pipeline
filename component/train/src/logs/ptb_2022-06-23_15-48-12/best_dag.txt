@@ -1,0 +1,1 @@
+defaultdict(<class 'list'>, {-1: [Node(id=0, name='identity')], -2: [Node(id=0, name='identity')], 0: [Node(id=1, name='identity'), Node(id=2, name='sigmoid')], 1: [Node(id=3, name='ReLU')], 2: [Node(id=4, name='avg')], 3: [Node(id=4, name='avg')], 4: [Node(id=5, name='h[t]')]})

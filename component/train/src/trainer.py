@@ -345,7 +345,7 @@ class Trainer(object):
                 abs_max_hidden_norm = new_abs_max_hidden_norm
                 logger.info(f'max hidden {abs_max_hidden_norm}')
             abs_max_grad = _check_abs_max_grad(abs_max_grad, model)
-            torch.nn.utils.clip_grad_norm(model.parameters(),
+            torch.nn.utils.clip_grad_norm__(model.parameters(),
                                           self.args.shared_grad_clip)
             self.shared_optim.step()
 
@@ -465,7 +465,7 @@ class Trainer(object):
             loss.backward()
 
             if self.args.controller_grad_clip > 0:
-                torch.nn.utils.clip_grad_norm(model.parameters(),
+                torch.nn.utils.clip_grad_norm__(model.parameters(),
                                               self.args.controller_grad_clip)
             self.controller_optim.step()
 
@@ -567,9 +567,9 @@ class Trainer(object):
         # https://github.com/pytorch/examples/blob/master/word_language_model/main.py
         length = min(length if length else self.max_length,
                      len(source) - 1 - idx)
-        data = Variable(source[idx:idx + length], volatile=volatile)
-        target = Variable(source[idx + 1:idx + 1 + length].view(-1),
-                          volatile=volatile)
+        with torch.no_grad():
+            data = Variable(source[idx:idx + length])
+            target = Variable(source[idx + 1:idx + 1 + length].view(-1))
 
         return data, target
 

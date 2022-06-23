@@ -149,7 +149,7 @@ class Controller(torch.nn.Module):
 
         # exploration
         if self.args.mode == 'train':
-            logits = (self.args.tanh_c*F.tanh(logits))
+            logits = (self.args.tanh_c*torch.tanh(logits))
 
         return logits, (hx, cx)
 
@@ -211,7 +211,6 @@ class Controller(torch.nn.Module):
                                self.func_names,
                                self.args.num_blocks)
 
-        save_dir = r"C:\Users\mokss\OneDrive\바탕 화면\enas_pipeline\component\train\src\fig"
         if save_dir is not None:
             for idx, dag in enumerate(dags):
                 utils.draw_network(dag,

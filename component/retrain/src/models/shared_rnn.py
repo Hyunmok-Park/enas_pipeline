@@ -365,7 +365,7 @@ class RNN(models.shared_base.SharedModel):
         if name == 'relu':
             f = F.relu
         elif name == 'tanh':
-            f = F.tanh
+            f = torch.tanh
         elif name == 'identity':
             f = lambda x: x
         elif name == 'sigmoid':
