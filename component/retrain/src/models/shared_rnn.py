@@ -199,6 +199,8 @@ class RNN(models.shared_base.SharedModel):
                 hidden=None,
                 is_train=True):
 
+        inputs = inputs.long()
+
         time_steps = inputs.size(0)
         batch_size = inputs.size(1)
 
