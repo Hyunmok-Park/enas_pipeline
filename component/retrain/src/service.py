@@ -27,4 +27,4 @@ def predict(input_arr: JSON):
     inp, dag = np.array(input_arr["inp"], dtype=np.float64), input_arr["dag"]
     dag = {int(k): [Node(el[0], el[1]) for el in v] for k, v in dag.items()}
     res = runner.run(inp, dag)
-    return res
+    return res[0].detach().cpu().numpy()
